@@ -1,6 +1,6 @@
-* join 默认为inner join,其只显示公共部分的数据，可以用下图表示
+* join 默认为inner join,其只显示公共部分的数据，可以用下图表示 
 ![](http://www.habadog.com.img.800cdn.com/wp-content/uploads/2013/06/inner_join.jpg)
-* left join 和right join差不多，两者可以相互转换，显示其中某一张表的所有数据，另一张表如果没有对应的数据则用null填充，如下图所示
+* left join 和right join差不多，两者可以相互转换，显示其中某一张表的所有数据，另一张表如果没有对应的数据则用null填充，如下图所示  
 ![](http://www.habadog.com.img.800cdn.com/wp-content/uploads/2013/06/left_join.jpg)
 * 如果在insert 语句末尾制订了 ON DUPLICATE KEY UPDATE,并且插入行后会导致在一个UNIQUE索引或PRIMARY KEY中出现重复值，则在出现重复值的时候执行UPDATE,如果不会导致唯一值列表重复的问题，则插入新行。官网示例如下：
 ```sql
