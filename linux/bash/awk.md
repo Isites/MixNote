@@ -507,4 +507,43 @@ awk 'BEGIN{
 
 ---
 
-数组是awk的灵魂, 处理
+数组是awk的灵魂, 处理文本中最不能少的就是它的数组处理.因为数组索引(下标)可以是数字和字符串在awk中数组叫做关联数组(associative arrays). awk中的数组不必提前声明, 也不必声明大小.数组元素用0或空字符串来初始化, 这根据上下文而定.
+
+**数组的定义**
+
+数字做数组索引(下标):
+
+```shell
+Array[1]="sun"
+Array[2]="kai"
+```
+
+字符串做数组索引(下表):
+
+```shell
+Array["first"]="www"
+Array["last"]="name"
+Array["birth"]="1987"
+```
+
+使用中`print Array[1]`会打印出sun;使用`print Array[2]`会打印出kai;使用`print Array["birth"]`会得到1987
+
+**读取数组的值**
+
+```shell
+{for(item in array)}{print array[item];} #输出的顺序是随机的
+{for(i1;i<=len;i++)}{print array[i];}   #len是数组的长度
+```
+
+**得到数组长度**
+
+```shell
+awk 'BEGIN{info="it is a test";lens=split(info,array, " ");}{print length(array), lens;}'
+```
+
+length返回字符串以及数组长度, spilt进行分割字符串为数组, 也会返回分割得到数组长度.
+
+```shell
+awk 'BEGIN{info="it is a test";split(info,array, " ");}{print length(array), lens;}'
+```
+
