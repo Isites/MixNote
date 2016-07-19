@@ -450,7 +450,7 @@ awk 'BEGIN{
 
 **循环语句**
 
-`while语句`
+`while语句` 
 
 示例:
 
@@ -571,8 +571,161 @@ awk 'BEGIN{info="it is a test";tlen=split(info, arr, " "); for(k = 1; k<=tlen;k+
 awk 'BEGIN{arr["a"]="a1";arr["b"]="b1";if(arr["c"] != "1"){print "no found";}for(k in arr){print k, arr[k];}}'
 ```
 
+以上出现奇怪问题, `arr[c]`没有定义, 但是循环时候, 发现已经存在该键值, 它的值为空, 这里需要注意, awk数组是关联数组, 只要通过数组引用它的key, 就会自动创建该序列
 
+```shell
+#正确判断方法
+awk 'BEGIN{arr["a"]="a";arr["b"]="b";if("c" in arr){print "ok";}for(k in arr){print k, arr[k];}}'
+```
 
+`if (key in array)`通过这种方式判断数组中是否包含`key`键值
 
+```shell
+#删除键值
+awk 'BEGIN{arr["a"]="a";arr["b"]="b";delete arr["a"];for(k in arr){print k, arr[k];}}'
+```
 
+`delete array[key]`可以删除, 对应数组`key`的序列值
+
+**二维,多维数组使用**
+
+awk的多维数组在本质上是一维数组, 更确切一点, awk在存储上并不支持多维数组. awk提供了逻辑上模拟二维数组的访问方式. 例如, `array[2, 4] = 1`这样的访问方式时允许的. awk使用一个特殊的字符串`SUBSEP(�34)`作为分割字段, 在上面的例子中, 关联数组array存储的键值实际上是2�344.
+
+类似一维数组的成员测试, 多维数组可以使用`if( (i,j) in array)`这样的语法, 但是下标必须放置在圆括号中. 类似一维数组的循环访问, 多维数组使用`for (item in array)`这样的语法遍历数组. 与数组唯一不同的是, 多维数组必须使用`split()`函数来访问单独的下标分量
+
+```shell
+awk 'BEGIN{
+  for(i = 1; i < 10; i++){
+  	for(j = 1; j < 10; j++)}{
+  		arr[i, j] = i * j; print i,"*", j, "=", arr[i, j];
+	}
+  }
+}'
+```
+
+可以通过`array[k1, k2]`引用获得数组内容
+
+另一种方法:
+
+```shell
+awk 'BEGIN{
+  for(i = 1; i < 10; i++){
+  	for(j = 1; j < 10; j++)}{
+  		arr[i, j] = i * j;
+	}
+  }
+  for(m in arr){  
+  	split(m, arr1, SUBSEP);print arr1[1], "*", arr1[2], "=", arr[m];
+  }
+}'
+```
+
+#### 内置函数
+
+---
+
+awk内置函数, 主要分以下3种类似: 算数函数, 字符串函数, 其他一般函数, 时间函数.
+
+**算术函数**
+
+| 格式            | 描述                                       |
+| ------------- | ---------------------------------------- |
+| atan2(y, x)   | 返回y/x的反正切                                |
+| cos(x)        | 返回x的余弦; x是弧度                             |
+| sin(x)        | 返回x的正弦; x是弧度                             |
+| exp(x)        | 返回x幂函数                                   |
+| log(x)        | 返回x的自然对数                                 |
+| sqrt(x)       | 返回x平方根                                   |
+| int(x)        | 返回x的截断至整数的值                              |
+| rand()        | 返回任意数字n, 其中0 <= n < 1                    |
+| srand([expr]) | 将rand函数的种子值设置为Expr参数的值, 或如果省略Expr参数则使用某天的时间. 返回先前的种子值 |
+
+举例说明:
+
+```shell
+awk 'BEGIN{OFMT="%.3f";fs=sin(1);fe=exp(10);fl=log(10);fi=int(3.1415);print fs, fe, fl, fi;}'
+```
+
+OFMT设置输出数据格式是保留3位小数
+
+获得随机数:
+
+```shell
+awk 'BEGIN{srand();fr=int(100*rand());print fr;}'
+```
+
+**字符串函数**
+
+| 格式                              | 描述                                       |
+| ------------------------------- | ---------------------------------------- |
+| gsub(Ere, Repl, [In])           | 除了正则表达式所有具体值被替代这点, 它和sub函数完全一样滴执行        |
+| sub(Ere, Repl, [In])            | 用repl参数指定的字符串替换In参数指定的字符串中的由Ere参数指定的扩展正则表达式的第一个具体值. sub函数返回替换的数量.出现在repl参数指定的字符串中的&(和符号)由In参数指定的与Ere参数的指定的扩展正则表达式匹配的字符串替换. 如果未指定in参数, 缺省值是整个记录($0 记录变量) |
+| index(String1, String2)         | 在由String1参数指定的字符串(其中有出现String2指定的参数)中, 返回位置, 从1开始编号. 如果String2参数不在String1参数中出现, 则返回0. |
+| length[(String)]                | 返回String参数指定的字符串的长度(一字节为单位).如果未给出出参数, 则返回整个记录的长度($0 记录变量) |
+| blength[(String)]               | 返回String参数指定的字符串的长度(以字节为单位). 如果未给出String参数, 则返回整个记录的长度($0变量) |
+| substr(string, M, [N])          | 返回具有N参数指定的字符数量子串. 子串从string参数指定的字符串取得, 其字符以M参数指定的位置开始. M参数指定为将string参数中的第一个字符作为编号1. 如果为指定N参数, 则子串的长度将是M参数指定的位置到string参数的末尾的长度. |
+| match(string, Ere)              | 在string参数指定的字符串(Ere参数指定的扩展正则表达式出现在其中)中返回位置(字符形式), 从1开始编号, 或如果Ere参数不出现, 则返回0. RSTART特殊变量设置为返回值.RLENGTHT特殊变量设置为匹配字符串的长度, 或如果为找到任何匹配, 则设置为-1 |
+| split(string, A, [Ere])         | 将string参数指定的参数分割为数组元素A[1], A[2], ....A[n], 并返回n变量的值.此分割可以通过Ere参数指定的扩展正则表达式进行, 或用当前字段分割符(FS 特殊变量)来进行(如果没有给出Ere参数). 除非上下文指明特定的元素还应具有一个数字值, 否则A数组中的元素用字符串值来创建 |
+| tolower(String)                 | 返回string参数指定的字符串, 字符串中每个大写字符将更改为小写. 大写和小写的映射由当前语言换将的LC_CTYPE范畴定义 |
+| toupper(string)                 | 返回string参数指定的字符串, 字符串中每个小写字符将更改为大写. 大写和小写的映射由当前语言环境的LC_CTYPE范畴定义. |
+| sprintf(format, expr, expr,...) | 根据format参数指定的printf子例程格式字符串来格式化Expr参数指定的表达式并返回最后生成的字符串. |
+
+**注:** Ere都可以是正则表达式
+
+**gsub, sub使用**
+
+```shell
+awk 'BEGIN{info="this is a test201232test!";gsub(/[0-9]+/, "!", info);print info}'
+```
+
+在info中查找满足正则表达式, `/[0-9]+/`用`""`替换, 并且替换后的值, 赋值给info, 未给出info, 默认是`$0`
+
+**查找字符串(index使用)**
+
+```shell
+awk 'BEGIN{info="this is a test"; print index(info, "test")? "ok" : "no found"}'
+```
+
+**正则表达式匹配查找(match使用)**
+
+```shell
+awk 'BEGIN{info="this is a test";print match(info, /[0-9]+/)?"ok":"no found";}'
+```
+
+**截取字符串(substr使用)**
+
+```shell
+awk 'BEGIN{info="this is a test";print substr(info, 4, 10);}'
+```
+
+**格式化字符串输出(sprintf使用)**
+
+[格式化字符串格式]()
+
+其中格式化字符串包括两部分内容: 一部分是正常字符, 这些字符将被按原样输出; 另一部分是格式化规定字符, 以`"%"`开始, 后跟一个或几个规定字符, 用来确定输出内容格式.
+
+| 格式   | 描述              |
+| ---- | --------------- |
+| %d   | 十进制有符号整数        |
+| %u   | 十进制无符号整数        |
+| %f   | 浮点数             |
+| %s   | 字符串             |
+| %c   | 单个字符            |
+| %p   | 指针的值            |
+| %e   | 指数形式的浮点数        |
+| %x   | %X无符号以十六进制表示的整数 |
+| %o   | 无符号以八进制表示的整数    |
+| %g   | 自动选择何时的表示法      |
+
+```shell
+awk 'BEGIN{n1=123.113;n2=-1.224;n3=1.2345;printf("%.2f, %.2u, %.2g, %X, %o\n", n1, n2, n3, n1, n1)}'
+```
+
+| 格式                               | 描述                                       |
+| -------------------------------- | ---------------------------------------- |
+| close(Expression)                | 用同一个带字符串值得Expression参数来关闭由print或printf语句打开的或调用getline函数打开的文件或管道. 如果文件或管道成功关闭, 则返回0; 其他情况下返回非零值. 如果打算写一个文件, 并稍后在同一个程序中读取文件, 则close语句时必需的 |
+| system(command)                  | 执行command参数指定的命令, 并返回退出状态. 等同于system子例程  |
+| Expression \| getline [Variable] | 从来自Expression参数指定的命令的输出中通过管道传送的流中读取一个输入记录, 并将该记录的值指定给Variable参数指定的的变量. 如果当前未打开将Expression参数的值作为其命令名称的流, 则创建流.创建的流等同于popen子例程, 此时command参数去Expression参数的值且Mode参数设置为一个 |
+|                                  |                                          |
+|                                  |                                          |
 
