@@ -725,7 +725,30 @@ awk 'BEGIN{n1=123.113;n2=-1.224;n3=1.2345;printf("%.2f, %.2u, %.2g, %X, %o\n", n
 | -------------------------------- | ---------------------------------------- |
 | close(Expression)                | 用同一个带字符串值得Expression参数来关闭由print或printf语句打开的或调用getline函数打开的文件或管道. 如果文件或管道成功关闭, 则返回0; 其他情况下返回非零值. 如果打算写一个文件, 并稍后在同一个程序中读取文件, 则close语句时必需的 |
 | system(command)                  | 执行command参数指定的命令, 并返回退出状态. 等同于system子例程  |
-| Expression \| getline [Variable] | 从来自Expression参数指定的命令的输出中通过管道传送的流中读取一个输入记录, 并将该记录的值指定给Variable参数指定的的变量. 如果当前未打开将Expression参数的值作为其命令名称的流, 则创建流.创建的流等同于popen子例程, 此时command参数去Expression参数的值且Mode参数设置为一个 |
-|                                  |                                          |
-|                                  |                                          |
+| Expression \| getline [Variable] | 从来自Expression参数指定的命令的输出中通过管道传送的流中读取一个输入记录, 并将该记录的值指定给Variable参数指定的的变量. 如果当前未打开将Expression参数的值作为其命令名称的流, 则创建流.创建的流等同于popen子例程, 此时command参数去Expression参数的值且Mode参数设置为一个是r的值. 只要流保留打开并且Expression参数求的同一个字符串, 则对getline函数的每次后续调用读取另一个记录. 如果未指定Variable参数, 则$0记录变量和NF特殊变量设置为从流读取的记录. |
+| getline [Variable]<Expression    | 从Expression参数指定的文件读取输入的下一个记录, 并将Variable参数指定的变量设置为该记录的值. 只要流保留打开且Expression参数对同一个字符串求值, 则对getline函数的每次后续调用读取另一个记录. 如果未指定Variable参数, 则$0记录变量和NF特殊变量设置为从流读取的记录. |
+| getline [Variable]               | 将Variable参数指定的变量设置为从当前输入文件读取的下一个输入记录. 如果未指定Variable参数, 则$0记录变量设置为该记录的值, 还将设置NF, NR和FNR特殊变量 |
 
+**打开外部文件**
+
+```shell
+awk 'BEGIN{while("cat /etc/passwd" | getline){print $0;};close("/etc/passwd")}'
+```
+
+**逐行读取外部文件(getline使用方法)**
+
+```shell
+awk 'BEGIN{while(getline < "/etc/passwd"){print $0}close("/etc/passwd");}'
+```
+
+```shell
+awk 'BEGIN{print "enter your name:"; getline name; print name;}'
+```
+
+**调用外部应用程序(system使用方法)**
+
+```shell
+awk 'BEGIN{b=system("ls -al");print b;}'
+```
+
+b返回值是执行结果
