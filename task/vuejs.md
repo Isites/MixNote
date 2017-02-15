@@ -99,4 +99,97 @@ Vue.vomponent('async-example', function(resolve, reject){
 });
 ```
 
-工厂函数接受一个`resolve`回调, 在收到从服务器下载的组件定义时调用. 也可以调用`reject(reason)`指示加载失败. 这里`setTimeout` 只是为了演示, 怎么获取组件完全由你决定. 
+工厂函数接受一个`resolve`回调, 在收到从服务器下载的组件定义时调用. 也可以调用`reject(reason)`指示加载失败. 这里`setTimeout` 只是为了演示, 怎么获取组件完全由你决定. 推荐配合使用: webpack的代码分割功能:
+
+```javascript
+Vue.component('async-webpack-example', function(resolve){
+  // 这个特殊的require 语法告诉webpack
+  // ....
+  require(['./my-async-componet'], resolve)
+})
+```
+
+[参考](https://cn.vuejs.org/v2/guide/components.html#异步组件)
+
+### 组件名约定
+
+当注册组件(或者props)时, 可以使用kebab-case, camelCase, 或TitleCase. Vue不关心这个
+
+```javascript
+// 在组件定义中
+compoents: {
+  // 使用kebab-case形式注册
+  'kebab-cased-compoent':{},
+  'camelCasedComponent':{}
+  // .....
+}
+```
+
+在HTMl中模板中, 请使用kebab-case形式:
+
+```html
+<!-- 在HTMl模板中始终使用 kebab-case -->
+<kebab-cased-component></kebab-cased-component>
+<camel-cased-component></camel-cased-component>
+```
+
+当使用字符串模板是, 可以不受html的caseInsenstive限制. 这意味着在实际上的模板中, 你可以使用camleCase, TitleCase或者kebab-case来应用. 如果组件未经`slot`元素传递内容, 你甚至可以再组件名后使用`/`使其自闭合.当然, 这只在字符串模板中有效. 因为自闭的自定义元素是无效的HTML, 浏览器原生的解析器也无法识别它.
+
+### 递归组件
+
+组件在他的模板内可以递归地调用自己, 不过, 只当它有name 选项是才可以. 当你利用`Vue.component`全局注册了一个组件, 全局的id作为组件的`name`选项, 被自动设置. 如果你不谨慎, 递归组件可能导致死循环:
+
+```javascript
+name: 'stack-overflow',
+template: '<div><stack-overflow></stack-overflow></div>'
+```
+
+上面组件会导致一个错误'max stack size exceeded', 所以要确保递归调用有终止条件(比如递归调用时使用`v-if`并让他最终返回`false`)
+
+### 内联模板
+
+如果子组件有inline-template特性, 组件将把它的内容当做它的模板, 而不是把它当做分发内容. 这让模板更灵活.
+
+```html
+<my-component inline-template>
+  <div>
+    <p>hteljsdlfjlsdjf</p>
+  </div>
+</my-component>
+```
+
+但是inline-template让模板的作用域难以理解. 最佳时间是使用template 选项在组件内定义模板或者在`.vue`文件中使用`template`元素.
+
+### X-Templates
+
+另一种定义模板的方式是在JavaScript标签里使用`text/x-template`类型, 并且指定一个id. 列如:
+
+```html
+<script type="text/x-template" id="hello-world-template">
+	<p> Heloooo</p>
+</script>
+```
+
+```javascript
+Vue.component('hello-world', {
+  template: '#hello-world-template'
+})
+```
+
+这在又很多模板或者小的应用中有应用, 否则应该避免使用, 因为它将模板和组件的其他定义隔离了.
+
+### 使用`v-once`的低级静态组件
+
+尽管在vue中渲染html很快, 不过当组件包含大量静态内容时, 可以考虑使用`v-once`将渲染结果缓存起来, 就像这样
+
+```javascript
+Vue.component('terms-of-service', {
+  template: '\
+	<div v-once>\
+		<h1>Terms of service</h1> \
+		sldfjlsdjlfjlsjfldjslf..... \
+	</div>
+  '
+})
+```
+
