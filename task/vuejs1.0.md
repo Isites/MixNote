@@ -132,3 +132,62 @@ new Vue(
 
 ### 过渡状态
 
+vue的过渡系统提供了非常多简单的方法设置进入、离开和列表的动效。 那么对于元数据本身的动效呢
+
+* 数字和运算
+* 颜色的显示
+* svg节点的位置
+* 元素的大小和其他的属性
+
+所有的原始数字都被事先存储起来， 可以直接转换到数字。 做到这一步， 我们就可以结合vue的响应式和组件系统， 使用第三方库来实现切换元素的过渡状态。
+
+---
+
+### 状态动画与watcher
+
+通过watcher我们能监听到任何数值属性的更新。 可能听起来很抽象， 所以让我们先来看看使用tweenjs一个列子：
+
+```html
+<script src=".....tween.js@16.3.4"></script>
+<div id="aniated-number-demo">
+  <input v-mode.number="number" type="number" step="20">
+  <p>
+    {{animatedNumber}}
+  </p>
+</div>
+```
+
+```javascript
+new Vue({
+ el:'#animated-number-demo',
+  data:{
+    number: 0,
+    animatedNumber: 0
+  },
+  watch:{
+    number:function(newValue, oldValue){
+      var vm = this
+      function animate(time){
+        requestAnimationFrame(animate)
+        TWEEN.update(time)
+      }
+      new TWEEN.Tween({TweeningNumber:oldValue})
+        .easing(TWEEN.EASing.Quadratic.Out)
+        .to({tweeningNumber:newValue}, 500)
+        .onUpdate(function(){
+          vm.animatedNumber= this.tweeningNumber.toFixed(0)
+        }).start()
+      animate()
+    }
+  }
+})
+```
+
+### 动态状态转换
+
+就像vue的过渡组件一样， 数据背后状态转换会实时更新， 这对于原型设计十分有用。 当你修改一些变量， 即使是一个简单的svg多边形也可以事先很多难以想象的效果。[demo](https://jsfiddle.net/chrisvfritz/65gLu2b6/)
+
+
+
+
+
