@@ -187,7 +187,142 @@ new Vue({
 
 就像vue的过渡组件一样， 数据背后状态转换会实时更新， 这对于原型设计十分有用。 当你修改一些变量， 即使是一个简单的svg多边形也可以事先很多难以想象的效果。[demo](https://jsfiddle.net/chrisvfritz/65gLu2b6/)
 
+### 钩子函数
 
+指令定义函数提供了几个钩子函数(可选):
 
+* `bind`: 只调用一次, 指令第一次绑定好元素时调用, 用这个钩子函数可以定义一个在绑定时执行一次的初始化操作.
+* `inserted`: 被绑定元素插入父节点时调用(父节点存在即可调用, 不必存在于document中).
+* `update`: 被绑定元素所在的模板更新时调用, 而不论绑定值是否变化. 通过比较更新前后的绑定值, 可以忽略不必要的模板更新(详细的钩子函数参数见下)
+* `componentUpdated`: 被绑定元素所在模板完成一次更新周期时调用
+* `unbind`: 只调用一次, 指令与元素解绑时调用
 
+### 钩子函数参数
+
+钩子函数被赋予一下参数:
+
+* **el**: 指令绑定的元素, 可以用来直接操作DOM.
+* **binding**: 一个对象, 包含一下属性:
+  * **name**: 指令名, 不包括`v-`前缀
+  * **value**: 指令的绑定值, 例如`v-my-directiv="1 + 1"`, value的值是`2`
+  * **oldValue**: 指令绑定的前一个值, 尽在`update`和`componentUpdate`钩子中可以用. 无论值是否改变都可用
+  * **expression**: 绑定值得字符串形式. 例如`v-my-directive= "1 + 1"`, expression的值是`1 + 1`
+  * **arg**: 传给指令的参数. 列如`v-my-directive:foo`, arg的值是"foo"
+  * **modifiers**: 一个包含修饰符的对象. 例如: `v-my-directive.foo.bar`, 修饰符对象modifiers的值是`{foo:true, bar:true}`
+  * **vnode**: Vue编译生成的虚拟节点, [Vnode接口](https://cn.vuejs.org/v2/api/#VNode接口)
+  * **oldVnode**: 上一个虚拟节点, 仅在`update`和`componentUpdate`钩子中可用
+
+> 除了`el`之外, 其他参数都应该是只读的, 尽量不要修改他们. 如果需要在钩子之间共享数据, 建议通过元素的dataset来进行.
+
+一个使用了这些参数的自定义钩子样例:
+
+```html
+<div id="hook-arguments-example" v-demo:hello.a.b="message"></div>
+```
+
+```javascript
+Vue.directive('demo', {
+  bind: function(el, binding, vnode){
+    vars = JSON.stringify
+    el.innerHTML = 
+      'name: ' + s(binding.name) + '<br>' +
+      'value: ' + s(binding.value) + '<br>' +
+      'expression: ' + s(binding.arg) + '<br>' +
+      'modifiers: ' + s(binding.modifiers) + '<br>' +
+      'vnode keys: ' + Object.keys(vnode).join(' ,')
+  }
+})
+new Vue({
+  el: '#hook-arguments-example',
+  data: {
+    message: 'hello'
+  }
+})
+```
+
+### 函数简写
+
+大多数情况下, 我们可能想在`bind`和`update`钩子上做重复动作, 并且不关心其他的钩子函数.
+
+```javascript
+Vue.directive('color-swatch', function(el, binding){
+  el.style.backgroundColor = binding.value
+})
+```
+
+### 对象字面量
+
+如果指令需要多个值, 可以传入一个JavaScript对象字面量. 记住指令函数能够接受所有合法类型的JavaScript表达式.
+
+```HTML
+<div v-demo="{color: 'white', text: 'hello'}">
+</div>
+```
+
+```javascript
+Vue.directive('demo',function(el, binding){
+  console.log(binding.value.color)
+  console.log(binding.value.text)
+})
+```
+
+### 混合
+
+> 混合是一种灵活的分布式复用Vue组件的方式. 混合对象可以包含任意组件选项. 以组件使用混合对象时, 所有混合对象的选项将被混入该组件本身的选项.
+
+列子:
+
+```javascript
+//定义一个混合对象
+var myMixin = {
+  created: function(){
+    this.hello()
+  },
+  methods: {
+    hello: function(){
+      console.log('hello from mixin!')
+    }
+  }
+}
+
+//定义一个使用混合对象的组件
+var Component = Vue.extend({
+  mixins: [myMixin]
+})
+var component = new Component(); // hello from mixin
+
+```
+
+#### 选项合并
+
+当组件和混合对象含有同名选项时, 这些选项将以恰当的方式混合. 比如, 同名钩子函数将混合为一个数组, 因此都将被调用. 另外, 混合对象的钩子将在组件自身钩子**之前**调用:
+
+值为对象的选项时, 例如`methods`, `components`和`directives`, 将被混合为同一个对象. 两个对象键名冲突时, 取组件对象的键值对.
+
+```javascript
+var mixin = {
+  methods: {
+    foo: function(){
+      console.log('foo')
+    },
+    conflicting: function(){
+      console.log('from mixin')
+    }
+  }
+}
+var vm = new Vue({
+  mixins: [mixin],
+  methods: {
+    bar: function(){
+      console.log('bar')
+    },
+    confliction: function(){
+      console.log('from self')
+    }
+  }
+})
+vm.foo()
+vm.bar()
+vm.conflicting() //from self
+```
 
