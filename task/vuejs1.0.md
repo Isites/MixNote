@@ -325,3 +325,90 @@ vm.foo()
 vm.bar()
 vm.conflicting() //from self
 ```
+
+### 全局混合
+
+也可以全局注册混合对象。请注意使用！一旦使用全局混合对象， 将会影响到所有之后创建的Vue实例。 使用恰当是， 可以为自定对象注入处理逻辑
+
+```javascript
+Vue.mixin({
+  created:function(){
+    var myOption = this.$options.myOption
+    if(myOption){
+      console.log(myOption);
+    }
+  }
+})
+```
+
+### 自定义选项混合策略
+
+自定义选项将使用默认策略，既简单地覆盖已有值。如果想让自定义选项以自定义逻辑混合， 可以想`Vue.config.optionMergeStrategies`添加一个函数：
+
+```javascript
+Vue.config.optionMergeStrategies.myOption = function (toVal, fromVal){
+  // return mergedVal
+}
+```
+
+ 对于大多数对象选项， 可以使用`methods`的合并策略：
+
+```javascript
+var strategies = Vue.config.optionMergeStrategies
+strategies.myOption = strategies.methods
+```
+
+### 插件
+
+插件通常会Vue添加全局功能。 插件的范围没有限制， 一般有以下几种：
+
+1. 添加全局方法或者属性， 如vue-element
+2. 添加全局资源： 指令/过滤器/过渡等， 如vue-touch
+3. 通过全局mixin添加一些组件选项， 如：vuex
+4. 添加Vue实例方法， 通过把他们添加到Vue.prototype上实现。
+5. 一个库， 提供自己的API， 同时提供上面提到的一个或多个功能， 如vue-router
+
+Vue.js的插件应当有一个公开方法`install`. 这个方法的第一个参数是Vue构造器， 第二个参数是一个可选的选项对象：
+
+```javascript
+MyPlugin.install = function(Vue, options){
+  //1. 添加全局方法或属性
+  Vue.myGlobalMethod = function(){
+    
+  }
+  // 2. 添加全局资源
+  Vue.directive('my-directive', {
+    bind(el, binding, vnode, oldVnode){}
+  })
+  Vue.mixin({
+    created: function(){
+      
+    }
+  })
+  // 添加实例方法
+  Vue.prototype.$myMethod = function(options){}
+}
+```
+
+### 使用插件
+
+通过全局方法Vue.use()使用插件
+
+```javascript
+Vue.use(MyPlugin)
+//传入一个选项对象
+Vue.use(MyPlugin, {someOption:true})
+```
+
+`Vue.use`会自动组织注册相同插件多次， 届时只会注册一次该插件。
+
+一些插件， 如`vue-router`, 如果Vue是全局变量则自动调用`Vue.use`. 不过在模块环境中应当始终显示调用`Vue.use`
+
+### 单文件组件
+
+
+
+
+
+
+
