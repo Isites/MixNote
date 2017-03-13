@@ -325,4 +325,3 @@ vm.foo()
 vm.bar()
 vm.conflicting() //from self
 ```
-
